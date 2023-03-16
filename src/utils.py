@@ -1,6 +1,7 @@
 import selenium
 import unittest
-
+import string
+import random
 
 from selenium import webdriver as WebDriver
 from selenium.webdriver.common.by import By
@@ -14,6 +15,7 @@ from selenium.webdriver.edge.options import Options as OptionsEdge
 
 from time import sleep
 
+url = 'https://demoblaze.com/index.html'
 
 class WebDriverSetUp(unittest.TestCase):
 
@@ -74,6 +76,17 @@ def open_new_tab(driver, url):
 
 def close_tab(driver):
     pass
+
+def rand_string(group=string.ascii_letters, n=10):
+    """
+    this function is taking a group of letters and then takes a number.
+    it returns a string with random chars from the group in the length of the number  we provided
+    :param group:
+    :param n:
+    :return:
+    """
+    return ''.join(random.choice(group) for i in range(n))
+
 
 if __name__ == '__main__':
     unittest.main()

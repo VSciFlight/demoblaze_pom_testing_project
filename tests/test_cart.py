@@ -4,6 +4,7 @@ from src.locators.locators_index import CartLocator
 from src.locators.locators_index import HomepageLocator
 from src.locators.locators_index import ProductLocator
 from src.pages.cart import CartPage
+from src.pages.product import ProductPage
 
 class TestCartPage(u.WebDriverSetUp):
 
@@ -65,175 +66,164 @@ class TestCartPage(u.WebDriverSetUp):
 
     def test_place_order_button(self):
 
-        u.sleep(4)
-        self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[5]/div/div/h4/a').click()
+        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Random_Product'])).click()
         u.sleep(3)
-        self.Add_cart_button = self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[2]/div/a')
-        self.Add_cart_button.click()
-        u.sleep(3)
+
+        ProductPage.add_product_to_cart(self)
         u.WDW(self.driver, 3).until(u.EC.alert_is_present())
         alert = self.driver.switch_to.alert
         alert.accept()
-        self.driver.find_element(u.By.XPATH, '//*[@id="cartur"]').click()
-        u.sleep(4)
-        self.Place_order_button = self.driver.find_element(u.By.XPATH, '//*[@id="page-wrapper"]/div/div[2]/button')
-        self.Place_order_button.click()
+
+        HeaderPage.click_cart_btn(self)
+        CartPage.click_place_order(self)
         u.sleep(3)
 
+        modal = self.driver.find_element(u.By.XPATH, '//*[@id="orderModal"]')
+        self.assertEqual(modal.get_attribute('class'), 'modal fade show')
 
 
-    def test_purchace_with_valid_data(self):
 
-        u.sleep(5)
-        self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[5]/div/div/h4/a').click()
-        u.sleep(5)
-        self.Add_cart_button = self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[2]/div/a')
-        self.Add_cart_button.click()
-        u.sleep(5)
-        u.WDW(self.driver, 5).until(u.EC.alert_is_present())
-        alert = self.driver.switch_to.alert
-        alert.accept()
-        u.sleep(4)
-        self.driver.find_element(u.By.XPATH, '//*[@id="cartur"]').click()
-        u.sleep(4)
-        self.Place_order_button = self.driver.find_element(u.By.XPATH, '//*[@id="page-wrapper"]/div/div[2]/button')
-        self.Place_order_button.click()
-        u.sleep(5)
-        self.name_field = self.driver.find_element(u.By.XPATH, '//*[@id="name"]')
-        self.country_filed = self.driver.find_element(u.By.XPATH, '//*[@id="country"]')
-        self.city_filed = self.driver.find_element(u.By.XPATH, '//*[@id="city"]')
-        self.credit_card_filed = self.driver.find_element(u.By.XPATH, '//*[@id="card"]')
-        self.month_filed = self.driver.find_element(u.By.XPATH, '//*[@id="month"]')
-        self.year_filed = self.driver.find_element(u.By.XPATH, '//*[@id="year"]')
+    def test_purchase_with_valid_data(self):
+        """
+        test purchase details with valid data
+        :return:
+        """
+        CartPage.from_homepage_to_item_in_cart(self)
+        CartPage.click_place_order(self)
 
-        self.name_field.send_keys("nir_peled")
-        self.country_filed.send_keys("israel")
-        self.city_filed.send_keys("shoam")
-        self.credit_card_filed.send_keys("51159876543654")
-        self.month_filed.send_keys("14.6")
-        self.year_filed.send_keys("2001")
+        u.sleep(2)
+        self.order_modal = CartPage.order_modal_fields(self)
 
-        u.sleep(3)
-        self.purchase = self.driver.find_element(u.By.XPATH, '//*[@id="orderModal"]/div/div/div[3]/button[2] ')
-        self.purchase.click()
-        u.sleep(3)
+        self.order_modal['name'].send_keys("Nir Peled")
+        self.order_modal['country'].send_keys("Israel")
+        self.order_modal['city'].send_keys("Shoam")
+        self.order_modal['card'].send_keys("51159876543654")
+        self.order_modal['month'].send_keys("14.6")
+        self.order_modal['year'].send_keys("2001")
 
+        u.sleep(1)
+        CartPage.click_purchase(self)
+        u.sleep(1)
 
+        confirm_message = self.driver.find_element(u.By.XPATH, '/html/body/div[10]/h2').text
+        self.assertEqual(confirm_message, "Thank you for your purchase!")
 
     def test_ok_button_valid(self):
+        """
+        testing the ok button after purchase leads me to the homepage
+        :return:
+        """
+        CartPage.from_homepage_to_item_in_cart(self)
+        CartPage.click_place_order(self)
 
-        u.sleep(5)
-        self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[5]/div/div/h4/a').click()
-        u.sleep(5)
-        self.Add_cart_button = self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[2]/div/a')
-        self.Add_cart_button.click()
-        u.sleep(5)
-        u.WDW(self.driver, 5).until(u.EC.alert_is_present())
-        alert = self.driver.switch_to.alert
-        alert.accept()
-        u.sleep(4)
-        self.driver.find_element(u.By.XPATH, '//*[@id="cartur"]').click()
-        u.sleep(4)
-        self.Place_order_button = self.driver.find_element(u.By.XPATH, '//*[@id="page-wrapper"]/div/div[2]/button')
-        self.Place_order_button.click()
-        u.sleep(5)
-
-        self.name_field = self.driver.find_element(u.By.XPATH, '//*[@id="name"]')
-        self.country_filed = self.driver.find_element(u.By.XPATH, '//*[@id="country"]')
-        self.city_filed = self.driver.find_element(u.By.XPATH, '//*[@id="city"]')
-        self.credit_card_filed = self.driver.find_element(u.By.XPATH, '//*[@id="card"]')
-        self.month_filed = self.driver.find_element(u.By.XPATH, '//*[@id="month"]')
-        self.year_filed = self.driver.find_element(u.By.XPATH, '//*[@id="year"]')
-
-        self.name_field.send_keys("nir_peled")
-        self.country_filed.send_keys("israel")
-        self.city_filed.send_keys("shoam")
-        self.credit_card_filed.send_keys("51159876543654")
-        self.month_filed.send_keys("14.6")
-        self.year_filed.send_keys("2001")
-
-        u.sleep(3)
-        self.purchase = self.driver.find_element(u.By.XPATH, '//*[@id="orderModal"]/div/div/div[3]/button[2] ')
-        self.purchase.click()
-        u.sleep(3)
-        ok_button = self.driver.find_element(u.By.XPATH, '/html/body/div[10]/div[7]/div/button')
-        ok_button.click()
-        u.sleep(4)
-
-    def test_purchace_invalid_data(self):
-
-        u.sleep(5)
-        self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[6]/div/div/h4/a').click()
-        u.sleep(5)
-        self.Add_cart_button = self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[2]/div/a')
-        self.Add_cart_button.click()
-        u.sleep(5)
-        u.WDW(self.driver, 5).until(u.EC.alert_is_present())
-        alert = self.driver.switch_to.alert
-        alert.accept()
-        self.driver.find_element(u.By.XPATH, '//*[@id="cartur"]').click()
-        u.sleep(4)
-        self.Place_order_button = self.driver.find_element(u.By.XPATH, '//*[@id="page-wrapper"]/div/div[2]/button')
-        self.Place_order_button.click()
-        u.sleep(5)
-
-        self.name_field = self.driver.find_element(u.By.XPATH, '//*[@id="name"]')
-        self.country_filed = self.driver.find_element(u.By.XPATH, '//*[@id="country"]')
-        self.city_filed = self.driver.find_element(u.By.XPATH, '//*[@id="city"]')
-        self.credit_card_filed = self.driver.find_element(u.By.XPATH, '//*[@id="card"]')
-        self.month_filed = self.driver.find_element(u.By.XPATH, '//*[@id="month"]')
-        self.year_filed = self.driver.find_element(u.By.XPATH, '//*[@id="year"]')
-
-        self.name_field.send_keys("!%#^@dscfg")
-        self.country_filed.send_keys("ndskxmcn")
-        self.city_filed.send_keys("543gf")
-        self.credit_card_filed.send_keys("gtrdsx34#%^$#")
-        self.month_filed.send_keys("%$#@FD")
-        self.year_filed.send_keys("^TGFD")
-
-        u.sleep(4)
-        purchase = self.driver.find_element(u.By.XPATH, '//*[@id="orderModal"]/div/div/div[3]/button[2] ')
-        purchase.click()
-        u.sleep(4)
-        ok_button = self.driver.find_element(u.By.XPATH, '/html/body/div[10]/div[7]/div/button')
-        ok_button.click()
         u.sleep(2)
+        self.order_modal = CartPage.order_modal_fields(self)
 
-    def test_purchace_valid_data(self):
+        self.order_modal['name'].send_keys("Ashtray Maze")
+        self.order_modal['country'].send_keys("New York")
+        self.order_modal['city'].send_keys("Control Bureau")
+        self.order_modal['card'].send_keys("51159876543654")
+        self.order_modal['month'].send_keys("14.6")
+        self.order_modal['year'].send_keys("2001")
 
-        u.sleep(5)
-        self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[6]/div/div/h4/a').click()
-        u.sleep(5)
-        self.Add_cart_button = self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/div[2]/div/a')
-        self.Add_cart_button.click()
-        u.sleep(5)
+        u.sleep(1)
+        CartPage.click_purchase(self)
+        u.sleep(1)
+
+        CartPage.click_ok_after_purchase(self)
+        u.sleep(2)
+        self.assertEqual(self.driver.current_url, u.url)
+
+    def test_purchase_invalid_data(self):
+        """
+        test purchase with invalid data, random data
+        :return:
+        """
+        CartPage.from_homepage_to_item_in_cart(self)
+        CartPage.click_place_order(self)
+
+        u.sleep(2)
+        self.order_modal = CartPage.order_modal_fields(self)
+
+        self.order_modal['name'].send_keys(u.rand_string())
+        self.order_modal['country'].send_keys(u.rand_string())
+        self.order_modal['city'].send_keys(u.rand_string())
+        self.order_modal['card'].send_keys(u.rand_string())
+        self.order_modal['month'].send_keys(u.rand_string())
+        self.order_modal['year'].send_keys(u.rand_string())
+
+        u.sleep(1)
+        CartPage.click_purchase(self)
+        u.sleep(1)
+
+        confirm_message = self.driver.find_element(u.By.XPATH, '/html/body/div[10]/h2').text
+        self.assertNotEqual(confirm_message, "Thank you for your purchase!")
+
+
+    def test_empty_purchase_details(self):
+        """
+        I expect the form not to transfer me ahead
+        :param self:
+        :return:
+        """
+
+        CartPage.from_homepage_to_item_in_cart(self)
+
+        u.sleep(2)
+        self.order_modal = CartPage.order_modal_fields(self)
+
+        u.sleep(1)
+        CartPage.click_purchase(self)
+        u.sleep(1)
+
         u.WDW(self.driver, 5).until(u.EC.alert_is_present())
         alert = self.driver.switch_to.alert
-        alert.accept()
-        self.driver.find_element(u.By.XPATH, '//*[@id="cartur"]').click()
-        u.sleep(4)
-        self.Place_order_button = self.driver.find_element(u.By.XPATH, '//*[@id="page-wrapper"]/div/div[2]/button')
-        self.Place_order_button.click()
-        u.sleep(5)
 
-        self.name_field = self.driver.find_element(u.By.XPATH, '//*[@id="name"]')
-        self.country_filed = self.driver.find_element(u.By.XPATH, '//*[@id="country"]')
-        self.city_filed = self.driver.find_element(u.By.XPATH, '//*[@id="city"]')
-        self.credit_card_filed = self.driver.find_element(u.By.XPATH, '//*[@id="card"]')
-        self.month_filed = self.driver.find_element(u.By.XPATH, '//*[@id="month"]')
-        self.year_filed = self.driver.find_element(u.By.XPATH, '//*[@id="year"]')
+        self.assertEqual(alert.text, 'Please fill out Name and Creditcard.')
 
-        self.name_field.send_keys("Ran")
-        self.country_filed.send_keys("Israel")
-        self.city_filed.send_keys("Holon")
-        self.credit_card_filed.send_keys("1884230548932442")
-        self.month_filed.send_keys("13.4")
-        self.year_filed.send_keys("2002")
+    def test_min_purchase_details(self):
+        """
+        The site asked me to fill only name and creditcard.
+        this test will valid it
+        :param self:
+        :return:
+        """
 
-        u.sleep(4)
-        purchase = self.driver.find_element(u.By.XPATH, '//*[@id="orderModal"]/div/div/div[3]/button[2] ')
-        purchase.click()
-        u.sleep(4)
-        ok_button = self.driver.find_element(u.By.XPATH, '/html/body/div[10]/div[7]/div/button')
-        ok_button.click()
-        u.sleep(4)
+        CartPage.from_homepage_to_item_in_cart(self)
+        CartPage.click_place_order(self)
+
+        u.sleep(2)
+        self.order_modal = CartPage.order_modal_fields(self)
+
+        self.order_modal['name'].send_keys("Nir Peled")
+        self.order_modal['card'].send_keys("51159876543654")
+
+        u.sleep(1)
+        CartPage.click_purchase(self)
+        u.sleep(1)
+
+        confirm_message = self.driver.find_element(u.By.XPATH, '/html/body/div[10]/h2').text
+        self.assertEqual(confirm_message, "Thank you for your purchase!")
+
+
+
+    def test_open_cart_url_directly(self):
+        """
+        A fun bug I found.
+        I found out if you open the cart url directly (without going through in homepage)
+        the cart rows just populate for some point
+        :return:
+        """
+        self.driver.quit()
+
+        self.driver = u.WebDriver.Chrome()
+        self.driver.get('https://demoblaze.com/cart.html')
+        u.sleep(10)
+
+        cart_rows = self.driver.find_elements(u.By.XPATH, '//*[@id="tbodyid"]/tr')
+        self.assertFalse(len(cart_rows), msg=f'{len(cart_rows)} orders')     # I should get no items
+
+
+
+
+

@@ -14,9 +14,11 @@ class HeaderPage:
 
     def click_contact_btn(self):
         u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HeadLocator.locHeader['Head_Contact'])).click()
+        u.sleep(1)
 
     def click_about_us_btn(self):
         u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HeadLocator.locHeader['Head_About_Us'])).click()
+        u.sleep(1)
 
     def click_cart_btn(self):
         u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HeadLocator.locHeader['Head_Cart'])).click()
@@ -26,6 +28,11 @@ class HeaderPage:
 
     def click_signup_btn(self):
         u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HeadLocator.locHeader['Head_Signup'])).click()
+        u.sleep(1)
+
+    def click_login_btn(self):
+        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HeadLocator.locHeader['Head_Login'])).click()
+        u.sleep(1)
 
     def click_logo_btn(self):
         u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HeadLocator.locHeader['Head_Logo'])).click()

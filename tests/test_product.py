@@ -12,6 +12,7 @@ class TestProductPage(u.WebDriverSetUp):
         after mapping for a while we got 15 products total
         :return:
         """
+
         for i in range(1, 16):
             prod_url = 'https://demoblaze.com/prod.html?idp_='
             new_url = prod_url + str(i)

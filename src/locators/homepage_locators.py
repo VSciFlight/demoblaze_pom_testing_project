@@ -30,3 +30,7 @@ class HomepageLocator:
     locHome['Slide_RightSlide_indicator'] = (u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[3]")
 
     locHome['Random_Product'] = (u.By.XPATH, f'//*[@id="tbodyid"]/div[{random.randint(1,9)}]/div/div/h4/a')
+    locHome['All_Products_Grid'] = (u.By.XPATH, '//*[@id="tbodyid"]')       # the grid itself
+    locHome['Products_In_Grid'] = (u.By.XPATH, '//*[@id="tbodyid"]/div')    # list of products in the grid
+    locHome['Products_Images_In_Grid'] = (u.By.XPATH, '//*[@id="tbodyid"]/div/div/a')    # list of products images in the grid
+    locHome['Products_Title_In_Grid'] = (u.By.XPATH, '//*[@id="tbodyid"]/div/div/div/h4/a')    # list of products titles in the grid

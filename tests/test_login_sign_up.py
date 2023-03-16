@@ -6,8 +6,9 @@ from src import utils as u
 
 
 class TestLoginSignUp(u.WebDriverSetUp):
-    username = LoginSignUpPage.rand_string(n=10)
-    password = LoginSignUpPage.rand_string(group=string.printable,n=10)
+
+    username = u.rand_string(n=10)
+    password = u.rand_string(group=string.printable,n=10)
 
     valid_username = "qazwsxedcqaz"
     valid_password = "qazwsxedcqaz"
@@ -68,14 +69,13 @@ class TestLoginSignUp(u.WebDriverSetUp):
         however it seems to accept more than 10 chars
         :return:
         """
-        tmp_user = LoginSignUpPage.rand_string(n=11)
+        tmp_user = u.rand_string(n=11)
         LoginSignUpPage.sign_up(self, tmp_user, self.password)
 
         u.WDW(self.driver, 5).until(u.EC.alert_is_present())
         alert = self.driver.switch_to.alert
 
-        self.assertNotEqual(alert.text, "Sign up successful.")
-        print("Able to create a user above 10 chars in username")
+        self.assertNotEqual(alert.text, "Sign up successful.",msg="Able to create a user above 10 chars in username")
 
         alert.accept()
 
@@ -146,7 +146,7 @@ class TestLoginSignUp(u.WebDriverSetUp):
         Test that you cannot log into non-existing account
         :return:
         """
-        LoginSignUpPage.login_acc(self, self.username, self.password)
+        LoginSignUpPage.login_acc(self, self.username, "1234")
 
         u.WDW(self.driver, 5).until(u.EC.alert_is_present())
         alert = self.driver.switch_to.alert
@@ -301,7 +301,3 @@ class TestLoginSignUp(u.WebDriverSetUp):
         welc_user = self.driver.find_element(u.By.XPATH, '//*[@id="nameofuser"]')
 
         self.assertEqual(welc_user.text, 'Welcome ' + self.valid_username)
-
-
-    def tearDown(self):
-        self.driver.quit()

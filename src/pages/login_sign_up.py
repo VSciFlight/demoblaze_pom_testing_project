@@ -1,6 +1,3 @@
-import string
-import random
-
 from src.locators.locators_index import LoginLocator
 from src.locators.locators_index import HeadLocator
 from src import utils as u
@@ -63,14 +60,3 @@ class LoginSignUpPage:
         LoginSignUpPage.login_set_usernsme(self, username)
         LoginSignUpPage.login_set_password(self, password)
         LoginSignUpPage.click_login(self)
-
-
-    def rand_string(group=string.ascii_letters, n=10):
-        """
-        this function is taking a group of letters and then takes a number.
-        it returns a string with random chars from the group in the length of the number  we provided
-        :param group:
-        :param n:
-        :return:
-        """
-        return ''.join(random.choice(group) for i in range(n))
