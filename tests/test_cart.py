@@ -58,9 +58,9 @@ class TestCartPage(u.WebDriverSetUp):
         self.driver.find_element(u.By.XPATH, '//*[@id="tbodyid"]/tr/td[4]/a').click()  #delete button
         u.sleep(2)
 
-        cart_row = self.driver.find_elements(CartLocator.locCart['Cart_Rows'])
-        self.assertFalse(cart_row)
+        cart_row = self.driver.find_elements(u.By.XPATH, '//*[@id="tbodyid"]/tr')
 
+        self.assertFalse(cart_row)
 
 
 
@@ -168,7 +168,7 @@ class TestCartPage(u.WebDriverSetUp):
         """
 
         CartPage.from_homepage_to_item_in_cart(self)
-
+        CartPage.click_place_order(self)
         u.sleep(2)
         self.order_modal = CartPage.order_modal_fields(self)
 

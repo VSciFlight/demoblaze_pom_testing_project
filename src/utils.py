@@ -94,5 +94,3 @@ def rand_string(group=string.ascii_letters, n=10):
 
 
 
-
-
