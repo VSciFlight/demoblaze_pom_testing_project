@@ -42,7 +42,7 @@ from src.locators.homepage_locators import HomepageLocator
 from src.locators.login_signup_locators import LoginLocator
 ```
 
-We also had writing conventions. To further read open the ["README_conventions.md"](https://github.com/VSciFlight/selenium_team_3/blob/main/README_conventions.md)\
+We also had writing conventions. To further read open the ["README_conventions.md"](https://github.com/VSciFlight/selenium_team_3/blob/main/README_conventions.md)
 
 
 ## [What is Demoblaze](https://demoblaze.com/)
@@ -84,8 +84,9 @@ in order to run the tests locally you have to download (get git) the git and cre
 <ul>
     <li>Selenium</li>
     <li>unittest</li>
+    <li>pytest</li>
 </ul>
 
-**in order to run all tests you have to run the "run_all.cmd"**
-### [Sum of errors we discovered can be found here](https://docs.google.com/spreadsheets/d/1VvUd2FPTsDQSyj9s7KK2liYoMto5XbzG_3cb7UyAajo/edit?usp=sharing)
+**in order to run all tests you have to run the "main.py" or "run_all.cmd"**
+### [Sum of errors we discovered can be found here](/bugs_hall.md)
 
