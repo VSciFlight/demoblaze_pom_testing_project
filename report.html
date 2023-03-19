@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>report.html</title>
+    <link href="assets/style.css" rel="stylesheet" type="text/css"/></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) { // eslint-disable-line no-redeclare
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function findAll(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sortColumn(elem) {
+    toggleSortStates(elem);
+    const colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    let key;
+    if (elem.classList.contains('result')) {
+        key = keyResult;
+    } else if (elem.classList.contains('links')) {
+        key = keyLink;
+    } else {
+        key = keyAlpha;
+    }
+    sortTable(elem, key(colIndex));
+}
+
+function showAllExtras() { // eslint-disable-line no-unused-vars
+    findAll('.col-result').forEach(showExtras);
+}
+
+function hideAllExtras() { // eslint-disable-line no-unused-vars
+    findAll('.col-result').forEach(hideExtras);
+}
+
+function showExtras(colresultElem) {
+    const extras = colresultElem.parentNode.nextElementSibling;
+    const expandcollapse = colresultElem.firstElementChild;
+    extras.classList.remove('collapsed');
+    expandcollapse.classList.remove('expander');
+    expandcollapse.classList.add('collapser');
+}
+
+function hideExtras(colresultElem) {
+    const extras = colresultElem.parentNode.nextElementSibling;
+    const expandcollapse = colresultElem.firstElementChild;
+    extras.classList.add('collapsed');
+    expandcollapse.classList.remove('collapser');
+    expandcollapse.classList.add('expander');
+}
+
+function showFilters() {
+    let visibleString = getQueryParameter('visible') || 'all';
+    visibleString = visibleString.toLowerCase();
+    const checkedItems = visibleString.split(',');
+
+    const filterItems = document.getElementsByClassName('filter');
+    for (let i = 0; i < filterItems.length; i++) {
+        filterItems[i].hidden = false;
+
+        if (visibleString != 'all') {
+            filterItems[i].checked = checkedItems.includes(filterItems[i].getAttribute('data-test-result'));
+            filterTable(filterItems[i]);
+        }
+    }
+}
+
+function addCollapse() {
+    // Add links for show/hide all
+    const resulttable = find('table#results-table');
+    const showhideall = document.createElement('p');
+    showhideall.innerHTML = '<a href="javascript:showAllExtras()">Show all details</a> / ' +
+                            '<a href="javascript:hideAllExtras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    findAll('.col-result').forEach(function(elem) {
+        const collapsed = getQueryParameter('collapsed') || 'Passed';
+        const extras = elem.parentNode.nextElementSibling;
+        const expandcollapse = document.createElement('span');
+        if (extras.classList.contains('collapsed')) {
+            expandcollapse.classList.add('expander');
+        } else if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add('collapsed');
+            expandcollapse.classList.add('expander');
+        } else {
+            expandcollapse.classList.add('collapser');
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener('click', function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains('collapsed')) {
+                showExtras(event.currentTarget);
+            } else {
+                hideExtras(event.currentTarget);
+            }
+        });
+    });
+}
+
+function getQueryParameter(name) {
+    const match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () { // eslint-disable-line no-unused-vars
+    resetSortHeaders();
+
+    addCollapse();
+
+    showFilters();
+
+    sortColumn(find('.initial-sort'));
+
+    findAll('.sortable').forEach(function(elem) {
+        elem.addEventListener('click',
+            function() {
+                sortColumn(elem);
+            }, false);
+    });
+}
+
+function sortTable(clicked, keyFunc) {
+    const rows = findAll('.results-table-row');
+    const reversed = !clicked.classList.contains('asc');
+    const sortedRows = sort(rows, keyFunc, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    const thead = document.getElementById('results-table-head');
+    document.getElementById('results-table').remove();
+    const parent = document.createElement('table');
+    parent.id = 'results-table';
+    parent.appendChild(thead);
+    sortedRows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName('BODY')[0].appendChild(parent);
+}
+
+function sort(items, keyFunc, reversed) {
+    const sortArray = items.map(function(item, i) {
+        return [keyFunc(item), i];
+    });
+
+    sortArray.sort(function(a, b) {
+        const keyA = a[0];
+        const keyB = b[0];
+
+        if (keyA == keyB) return 0;
+
+        if (reversed) {
+            return keyA < keyB ? 1 : -1;
+        } else {
+            return keyA > keyB ? 1 : -1;
+        }
+    });
+
+    return sortArray.map(function(item) {
+        const index = item[1];
+        return items[index];
+    });
+}
+
+function keyAlpha(colIndex) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[colIndex].firstChild.data.toLowerCase();
+    };
+}
+
+function keyLink(colIndex) {
+    return function(elem) {
+        const dataCell = elem.childNodes[1].childNodes[colIndex].firstChild;
+        return dataCell == null ? '' : dataCell.innerText.toLowerCase();
+    };
+}
+
+function keyResult(colIndex) {
+    return function(elem) {
+        const strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+            'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[colIndex].firstChild.data);
+    };
+}
+
+function resetSortHeaders() {
+    findAll('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    findAll('.sortable').forEach(function(elem) {
+        const icon = document.createElement('div');
+        icon.className = 'sort-icon';
+        icon.textContent = 'vvv';
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove('desc', 'active');
+        elem.classList.add('asc', 'inactive');
+    });
+}
+
+function toggleSortStates(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        resetSortHeaders();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function isAllRowsHidden(value) {
+    return value.hidden == false;
+}
+
+function filterTable(elem) { // eslint-disable-line no-unused-vars
+    const outcomeAtt = 'data-test-result';
+    const outcome = elem.getAttribute(outcomeAtt);
+    const classOutcome = outcome + ' results-table-row';
+    const outcomeRows = document.getElementsByClassName(classOutcome);
+
+    for(let i = 0; i < outcomeRows.length; i++){
+        outcomeRows[i].hidden = !elem.checked;
+    }
+
+    const rows = findAll('.results-table-row').filter(isAllRowsHidden);
+    const allRowsHidden = rows.length == 0 ? true : false;
+    const notFoundMessage = document.getElementById('not-found-message');
+    notFoundMessage.hidden = !allRowsHidden;
+}
+</script>
+    <h1>report.html</h1>
+    <p>Report generated on 19-Mar-2023 at 11:46:07 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v3.2.0</p>
+    <h2>Environment</h2>
+    <table id="environment">
+      <tr>
+        <td>JAVA_HOME</td>
+        <td>D:\Eclipse_Adoptium\JDK\</td></tr>
+      <tr>
+        <td>Packages</td>
+        <td>{"pluggy": "1.0.0", "pytest": "7.2.2"}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>Windows-10-10.0.22621-SP0</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{"allure-pytest": "2.13.1", "html": "3.2.0", "metadata": "2.0.4"}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.11.2</td></tr></table>
+    <h2>Summary</h2>
+    <p>31 tests ran in 370.07 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="passed">20 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="failed">11 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable" col="duration">Duration</th>
+          <th class="sortable links" col="links">Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_cart_recovery</td>
+          <td class="col-duration">21.84</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_cart.TestCartPage testMethod=test_cart_recovery&gt;<br/><br/>    def test_cart_recovery(self):<br/>        CartPage.add_product_to_cart(self)<br/>        u.WDW(self.driver, 5).until(u.EC.alert_is_present())<br/>        alert = self.driver.switch_to.alert<br/>        self.assertEqual(alert.text, &quot;Product added&quot;)<br/>        alert.accept()<br/>    <br/>        HeaderPage.click_cart_btn(self)<br/>        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(CartLocator.locCart[&#x27;Cart_Rows&#x27;]))<br/>    <br/>        self.assertEqual(self.driver.find_element(u.By.XPATH, &#x27;//*[@id=&quot;tbodyid&quot;]/tr&#x27;).get_attribute(&quot;class&quot;), &quot;success&quot;)<br/>    <br/>        self.driver.quit()<br/>        u.WebDriverSetUp.setUp(self)<br/>    <br/>        HeaderPage.click_cart_btn(self)<br/>    <br/>        try:<br/>&gt;           u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(CartLocator.locCart[&#x27;Cart_Rows&#x27;]))<br/><br/>tests\test_cart.py:28: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;selenium.webdriver.support.wait.WebDriverWait (session=&quot;cc0b96fa26f6c9e744943af7fce70a5d&quot;)&gt;<br/>method = &lt;function visibility_of_element_located.&lt;locals&gt;._predicate at 0x000002A733FDD300&gt;, message = &#x27;&#x27;<br/><br/>    def until(self, method, message: str = &quot;&quot;):<br/>        &quot;&quot;&quot;Calls the method provided with the driver as an argument until the \<br/>        return value does not evaluate to ``False``.<br/>    <br/>        :param method: callable(WebDriver)<br/>        :param message: optional message for :exc:`TimeoutException`<br/>        :returns: the result of the last call to `method`<br/>        :raises: :exc:`selenium.common.exceptions.TimeoutException` if timeout occurs<br/>        &quot;&quot;&quot;<br/>        screen = None<br/>        stacktrace = None<br/>    <br/>        end_time = time.monotonic() + self._timeout<br/>        while True:<br/>            try:<br/>                value = method(self._driver)<br/>                if value:<br/>                    return value<br/>            except self._ignored_exceptions as exc:<br/>                screen = getattr(exc, &quot;screen&quot;, None)<br/>                stacktrace = getattr(exc, &quot;stacktrace&quot;, None)<br/>            time.sleep(self._poll)<br/>            if time.monotonic() &gt; end_time:<br/>                break<br/>&gt;       raise TimeoutException(message, screen, stacktrace)<br/><span class="error">E       selenium.common.exceptions.TimeoutException: Message: </span><br/><span class="error">E       Stacktrace:</span><br/><span class="error">E       Backtrace:</span><br/><span class="error">E       	(No symbol) [0x00C637D3]</span><br/><span class="error">E       	(No symbol) [0x00BF8B81]</span><br/><span class="error">E       	(No symbol) [0x00AFB36D]</span><br/><span class="error">E       	(No symbol) [0x00B2D382]</span><br/><span class="error">E       	(No symbol) [0x00B2D4BB]</span><br/><span class="error">E       	(No symbol) [0x00B63302]</span><br/><span class="error">E       	(No symbol) [0x00B4B464]</span><br/><span class="error">E       	(No symbol) [0x00B61215]</span><br/><span class="error">E       	(No symbol) [0x00B4B216]</span><br/><span class="error">E       	(No symbol) [0x00B20D97]</span><br/><span class="error">E       	(No symbol) [0x00B2253D]</span><br/><span class="error">E       	GetHandleVerifier [0x00EDABF2+2510930]</span><br/><span class="error">E       	GetHandleVerifier [0x00F08EC1+2700065]</span><br/><span class="error">E       	GetHandleVerifier [0x00F0C86C+2714828]</span><br/><span class="error">E       	GetHandleVerifier [0x00D13480+645344]</span><br/><span class="error">E       	(No symbol) [0x00C00FD2]</span><br/><span class="error">E       	(No symbol) [0x00C06C68]</span><br/><span class="error">E       	(No symbol) [0x00C06D4B]</span><br/><span class="error">E       	(No symbol) [0x00C10D6B]</span><br/><span class="error">E       	BaseThreadInitThunk [0x76377D69+25]</span><br/><span class="error">E       	RtlInitializeExceptionChain [0x7798B74B+107]</span><br/><span class="error">E       	RtlClearBits [0x7798B6CF+191]</span><br/><br/>D:\Python\Python_Installation\Lib\site-packages\selenium\webdriver\support\wait.py:95: TimeoutException<br/><br/>During handling of the above exception, another exception occurred:<br/><br/>self = &lt;tests.test_cart.TestCartPage testMethod=test_cart_recovery&gt;<br/><br/>    def test_cart_recovery(self):<br/>        CartPage.add_product_to_cart(self)<br/>        u.WDW(self.driver, 5).until(u.EC.alert_is_present())<br/>        alert = self.driver.switch_to.alert<br/>        self.assertEqual(alert.text, &quot;Product added&quot;)<br/>        alert.accept()<br/>    <br/>        HeaderPage.click_cart_btn(self)<br/>        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(CartLocator.locCart[&#x27;Cart_Rows&#x27;]))<br/>    <br/>        self.assertEqual(self.driver.find_element(u.By.XPATH, &#x27;//*[@id=&quot;tbodyid&quot;]/tr&#x27;).get_attribute(&quot;class&quot;), &quot;success&quot;)<br/>    <br/>        self.driver.quit()<br/>        u.WebDriverSetUp.setUp(self)<br/>    <br/>        HeaderPage.click_cart_btn(self)<br/>    <br/>        try:<br/>            u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(CartLocator.locCart[&#x27;Cart_Rows&#x27;]))<br/>    <br/>        except:<br/>&gt;           self.assertTrue(self.driver.find_elements(u.By.XPATH, &#x27;//*[@id=&quot;tbodyid&quot;]/tr&#x27;), msg=&quot;No items in the cart&quot;)<br/><span class="error">E           AssertionError: [] is not true : No items in the cart</span><br/><br/>tests\test_cart.py:31: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_empty_purchase_details</td>
+          <td class="col-duration">14.97</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_cart.TestCartPage testMethod=test_empty_purchase_details&gt;<br/><br/>    def test_empty_purchase_details(self):<br/>        &quot;&quot;&quot;<br/>        I expect the form not to transfer me ahead<br/>        :param self:<br/>        :return:<br/>        &quot;&quot;&quot;<br/>    <br/>        CartPage.from_homepage_to_item_in_cart(self)<br/>    <br/>        u.sleep(2)<br/>        self.order_modal = CartPage.order_modal_fields(self)<br/>    <br/>        u.sleep(1)<br/>&gt;       CartPage.click_purchase(self)<br/><br/>tests\test_cart.py:174: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>src\pages\cart.py:25: in click_purchase<br/>    u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(CartLocator.locCart[&#x27;Purchase_Button&#x27;])).click()<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;selenium.webdriver.support.wait.WebDriverWait (session=&quot;18c8f9e36d4ce4219a40b1c75afce55c&quot;)&gt;<br/>method = &lt;function visibility_of_element_located.&lt;locals&gt;._predicate at 0x000002A73403EAC0&gt;, message = &#x27;&#x27;<br/><br/>    def until(self, method, message: str = &quot;&quot;):<br/>        &quot;&quot;&quot;Calls the method provided with the driver as an argument until the \<br/>        return value does not evaluate to ``False``.<br/>    <br/>        :param method: callable(WebDriver)<br/>        :param message: optional message for :exc:`TimeoutException`<br/>        :returns: the result of the last call to `method`<br/>        :raises: :exc:`selenium.common.exceptions.TimeoutException` if timeout occurs<br/>        &quot;&quot;&quot;<br/>        screen = None<br/>        stacktrace = None<br/>    <br/>        end_time = time.monotonic() + self._timeout<br/>        while True:<br/>            try:<br/>                value = method(self._driver)<br/>                if value:<br/>                    return value<br/>            except self._ignored_exceptions as exc:<br/>                screen = getattr(exc, &quot;screen&quot;, None)<br/>                stacktrace = getattr(exc, &quot;stacktrace&quot;, None)<br/>            time.sleep(self._poll)<br/>            if time.monotonic() &gt; end_time:<br/>                break<br/>&gt;       raise TimeoutException(message, screen, stacktrace)<br/><span class="error">E       selenium.common.exceptions.TimeoutException: Message:</span><br/><br/>D:\Python\Python_Installation\Lib\site-packages\selenium\webdriver\support\wait.py:95: TimeoutException<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_open_cart_url_directly</td>
+          <td class="col-duration">30.15</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_cart.TestCartPage testMethod=test_open_cart_url_directly&gt;<br/><br/>    def test_open_cart_url_directly(self):<br/>        &quot;&quot;&quot;<br/>        A fun bug I found.<br/>        I found out if you open the cart url directly (without going through in homepage)<br/>        the cart rows just populate for some point<br/>        :return:<br/>        &quot;&quot;&quot;<br/>        self.driver.quit()<br/>    <br/>        self.driver = u.WebDriver.Chrome()<br/>        self.driver.get(&#x27;https://demoblaze.com/cart.html&#x27;)<br/>        u.sleep(10)<br/>    <br/>        cart_rows = self.driver.find_elements(u.By.XPATH, &#x27;//*[@id=&quot;tbodyid&quot;]/tr&#x27;)<br/>&gt;       self.assertFalse(len(cart_rows), msg=f&#x27;{len(cart_rows)} orders&#x27;)     # I should get no items<br/><span class="error">E       AssertionError: 391 is not false : 391 orders</span><br/><br/>tests\test_cart.py:222: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_purchase_invalid_data</td>
+          <td class="col-duration">11.59</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_cart.TestCartPage testMethod=test_purchase_invalid_data&gt;<br/><br/>    def test_purchase_invalid_data(self):<br/>        &quot;&quot;&quot;<br/>        test purchase with invalid data, random data<br/>        :return:<br/>        &quot;&quot;&quot;<br/>        CartPage.from_homepage_to_item_in_cart(self)<br/>        CartPage.click_place_order(self)<br/>    <br/>        u.sleep(2)<br/>        self.order_modal = CartPage.order_modal_fields(self)<br/>    <br/>        self.order_modal[&#x27;name&#x27;].send_keys(u.rand_string())<br/>        self.order_modal[&#x27;country&#x27;].send_keys(u.rand_string())<br/>        self.order_modal[&#x27;city&#x27;].send_keys(u.rand_string())<br/>        self.order_modal[&#x27;card&#x27;].send_keys(u.rand_string())<br/>        self.order_modal[&#x27;month&#x27;].send_keys(u.rand_string())<br/>        self.order_modal[&#x27;year&#x27;].send_keys(u.rand_string())<br/>    <br/>        u.sleep(1)<br/>        CartPage.click_purchase(self)<br/>        u.sleep(1)<br/>    <br/>        confirm_message = self.driver.find_element(u.By.XPATH, &#x27;/html/body/div[10]/h2&#x27;).text<br/>&gt;       self.assertNotEqual(confirm_message, &quot;Thank you for your purchase!&quot;)<br/><span class="error">E       AssertionError: &#x27;Thank you for your purchase!&#x27; == &#x27;Thank you for your purchase!&#x27;</span><br/><br/>tests\test_cart.py:158: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_remove_item_from_cart</td>
+          <td class="col-duration">14.50</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_cart.TestCartPage testMethod=test_remove_item_from_cart&gt;<br/><br/>    def test_remove_item_from_cart(self):<br/>        CartPage.add_product_to_cart(self)<br/>        u.WDW(self.driver, 5).until(u.EC.alert_is_present())<br/>        alert = self.driver.switch_to.alert<br/>        alert.accept()<br/>    <br/>        self.driver.find_element(u.By.XPATH, &#x27;//*[@id=&quot;cartur&quot;]&#x27;).click()<br/>        u.sleep(2)<br/>        self.driver.find_element(u.By.XPATH, &#x27;//*[@id=&quot;tbodyid&quot;]/tr/td[4]/a&#x27;).click()  #delete button<br/>        u.sleep(2)<br/>    <br/>&gt;       cart_row = self.driver.find_elements(CartLocator.locCart[&#x27;Cart_Rows&#x27;])<br/><br/>tests\test_cart.py:59: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>D:\Python\Python_Installation\Lib\site-packages\selenium\webdriver\remote\webdriver.py:860: in find_elements<br/>    return self.execute(Command.FIND_ELEMENTS, {&quot;using&quot;: by, &quot;value&quot;: value})[&quot;value&quot;] or []<br/>D:\Python\Python_Installation\Lib\site-packages\selenium\webdriver\remote\webdriver.py:440: in execute<br/>    self.error_handler.check_response(response)<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;selenium.webdriver.remote.errorhandler.ErrorHandler object at 0x000002A734099E10&gt;<br/>response = {&#x27;status&#x27;: 400, &#x27;value&#x27;: &#x27;{&quot;value&quot;:{&quot;error&quot;:&quot;invalid argument&quot;,&quot;message&quot;:&quot;invalid argument: \&#x27;using\&#x27; must be a string...dInitThunk [0x76377D69+25]\\n\\tRtlInitializeExceptionChain [0x7798B74B+107]\\n\\tRtlClearBits [0x7798B6CF+191]\\n&quot;}}&#x27;}<br/><br/>    def check_response(self, response: Dict[str, Any]) -&gt; None:<br/>        &quot;&quot;&quot;Checks that a JSON response from the WebDriver does not have an<br/>        error.<br/>    <br/>        :Args:<br/>         - response - The JSON response from the WebDriver server as a dictionary<br/>           object.<br/>    <br/>        :Raises: If the response contains an error message.<br/>        &quot;&quot;&quot;<br/>        status = response.get(&quot;status&quot;, None)<br/>        if not status or status == ErrorCode.SUCCESS:<br/>            return<br/>        value = None<br/>        message = response.get(&quot;message&quot;, &quot;&quot;)<br/>        screen: str = response.get(&quot;screen&quot;, &quot;&quot;)<br/>        stacktrace = None<br/>        if isinstance(status, int):<br/>            value_json = response.get(&quot;value&quot;, None)<br/>            if value_json and isinstance(value_json, str):<br/>                import json<br/>    <br/>                try:<br/>                    value = json.loads(value_json)<br/>                    if len(value.keys()) == 1:<br/>                        value = value[&quot;value&quot;]<br/>                    status = value.get(&quot;error&quot;, None)<br/>                    if not status:<br/>                        status = value.get(&quot;status&quot;, ErrorCode.UNKNOWN_ERROR)<br/>                        message = value.get(&quot;value&quot;) or value.get(&quot;message&quot;)<br/>                        if not isinstance(message, str):<br/>                            value = message<br/>                            message = message.get(&quot;message&quot;)<br/>                    else:<br/>                        message = value.get(&quot;message&quot;, None)<br/>                except ValueError:<br/>                    pass<br/>    <br/>        exception_class: Type[WebDriverException]<br/>        if status in ErrorCode.NO_SUCH_ELEMENT:<br/>            exception_class = NoSuchElementException<br/>        elif status in ErrorCode.NO_SUCH_FRAME:<br/>            exception_class = NoSuchFrameException<br/>        elif status in ErrorCode.NO_SUCH_SHADOW_ROOT:<br/>            exception_class = NoSuchShadowRootException<br/>        elif status in ErrorCode.NO_SUCH_WINDOW:<br/>            exception_class = NoSuchWindowException<br/>        elif status in ErrorCode.STALE_ELEMENT_REFERENCE:<br/>            exception_class = StaleElementReferenceException<br/>        elif status in ErrorCode.ELEMENT_NOT_VISIBLE:<br/>            exception_class = ElementNotVisibleException<br/>        elif status in ErrorCode.INVALID_ELEMENT_STATE:<br/>            exception_class = InvalidElementStateException<br/>        elif (<br/>            status in ErrorCode.INVALID_SELECTOR<br/>            or status in ErrorCode.INVALID_XPATH_SELECTOR<br/>            or status in ErrorCode.INVALID_XPATH_SELECTOR_RETURN_TYPER<br/>        ):<br/>            exception_class = InvalidSelectorException<br/>        elif status in ErrorCode.ELEMENT_IS_NOT_SELECTABLE:<br/>            exception_class = ElementNotSelectableException<br/>        elif status in ErrorCode.ELEMENT_NOT_INTERACTABLE:<br/>            exception_class = ElementNotInteractableException<br/>        elif status in ErrorCode.INVALID_COOKIE_DOMAIN:<br/>            exception_class = InvalidCookieDomainException<br/>        elif status in ErrorCode.UNABLE_TO_SET_COOKIE:<br/>            exception_class = UnableToSetCookieException<br/>        elif status in ErrorCode.TIMEOUT:<br/>            exception_class = TimeoutException<br/>        elif status in ErrorCode.SCRIPT_TIMEOUT:<br/>            exception_class = TimeoutException<br/>        elif status in ErrorCode.UNKNOWN_ERROR:<br/>            exception_class = WebDriverException<br/>        elif status in ErrorCode.UNEXPECTED_ALERT_OPEN:<br/>            exception_class = UnexpectedAlertPresentException<br/>        elif status in ErrorCode.NO_ALERT_OPEN:<br/>            exception_class = NoAlertPresentException<br/>        elif status in ErrorCode.IME_NOT_AVAILABLE:<br/>            exception_class = ImeNotAvailableException<br/>        elif status in ErrorCode.IME_ENGINE_ACTIVATION_FAILED:<br/>            exception_class = ImeActivationFailedException<br/>        elif status in ErrorCode.MOVE_TARGET_OUT_OF_BOUNDS:<br/>            exception_class = MoveTargetOutOfBoundsException<br/>        elif status in ErrorCode.JAVASCRIPT_ERROR:<br/>            exception_class = JavascriptException<br/>        elif status in ErrorCode.SESSION_NOT_CREATED:<br/>            exception_class = SessionNotCreatedException<br/>        elif status in ErrorCode.INVALID_ARGUMENT:<br/>            exception_class = InvalidArgumentException<br/>        elif status in ErrorCode.NO_SUCH_COOKIE:<br/>            exception_class = NoSuchCookieException<br/>        elif status in ErrorCode.UNABLE_TO_CAPTURE_SCREEN:<br/>            exception_class = ScreenshotException<br/>        elif status in ErrorCode.ELEMENT_CLICK_INTERCEPTED:<br/>            exception_class = ElementClickInterceptedException<br/>        elif status in ErrorCode.INSECURE_CERTIFICATE:<br/>            exception_class = InsecureCertificateException<br/>        elif status in ErrorCode.INVALID_COORDINATES:<br/>            exception_class = InvalidCoordinatesException<br/>        elif status in ErrorCode.INVALID_SESSION_ID:<br/>            exception_class = InvalidSessionIdException<br/>        elif status in ErrorCode.UNKNOWN_METHOD:<br/>            exception_class = UnknownMethodException<br/>        else:<br/>            exception_class = WebDriverException<br/>        if not value:<br/>            value = response[&quot;value&quot;]<br/>        if isinstance(value, str):<br/>            raise exception_class(value)<br/>        if message == &quot;&quot; and &quot;message&quot; in value:<br/>            message = value[&quot;message&quot;]<br/>    <br/>        screen = None  # type: ignore[assignment]<br/>        if &quot;screen&quot; in value:<br/>            screen = value[&quot;screen&quot;]<br/>    <br/>        stacktrace = None<br/>        st_value = value.get(&quot;stackTrace&quot;) or value.get(&quot;stacktrace&quot;)<br/>        if st_value:<br/>            if isinstance(st_value, str):<br/>                stacktrace = st_value.split(&quot;\n&quot;)<br/>            else:<br/>                stacktrace = []<br/>                try:<br/>                    for frame in st_value:<br/>                        line = frame.get(&quot;lineNumber&quot;, &quot;&quot;)<br/>                        file = frame.get(&quot;fileName&quot;, &quot;&lt;anonymous&gt;&quot;)<br/>                        if line:<br/>                            file = f&quot;{file}:{line}&quot;<br/>                        meth = frame.get(&quot;methodName&quot;, &quot;&lt;anonymous&gt;&quot;)<br/>                        if &quot;className&quot; in frame:<br/>                            meth = f&quot;{frame[&#x27;className&#x27;]}.{meth}&quot;<br/>                        msg = &quot;    at %s (%s)&quot;<br/>                        msg = msg % (meth, file)<br/>                        stacktrace.append(msg)<br/>                except TypeError:<br/>                    pass<br/>        if exception_class == UnexpectedAlertPresentException:<br/>            alert_text = None<br/>            if &quot;data&quot; in value:<br/>                alert_text = value[&quot;data&quot;].get(&quot;text&quot;)<br/>            elif &quot;alert&quot; in value:<br/>                alert_text = value[&quot;alert&quot;].get(&quot;text&quot;)<br/>            raise exception_class(message, screen, stacktrace, alert_text)  # type: ignore[call-arg]  # mypy is not smart enough here<br/>&gt;       raise exception_class(message, screen, stacktrace)<br/><span class="error">E       selenium.common.exceptions.InvalidArgumentException: Message: invalid argument: &#x27;using&#x27; must be a string</span><br/><span class="error">E         (Session info: headless chrome=111.0.5563.65)</span><br/><span class="error">E       Stacktrace:</span><br/><span class="error">E       Backtrace:</span><br/><span class="error">E       	(No symbol) [0x00C637D3]</span><br/><span class="error">E       	(No symbol) [0x00BF8B81]</span><br/><span class="error">E       	(No symbol) [0x00AFB36D]</span><br/><span class="error">E       	(No symbol) [0x00B2D433]</span><br/><span class="error">E       	(No symbol) [0x00B2D4BB]</span><br/><span class="error">E       	(No symbol) [0x00B6333C]</span><br/><span class="error">E       	(No symbol) [0x00B4B464]</span><br/><span class="error">E       	(No symbol) [0x00B61215]</span><br/><span class="error">E       	(No symbol) [0x00B4B216]</span><br/><span class="error">E       	(No symbol) [0x00B20D97]</span><br/><span class="error">E       	(No symbol) [0x00B2253D]</span><br/><span class="error">E       	GetHandleVerifier [0x00EDABF2+2510930]</span><br/><span class="error">E       	GetHandleVerifier [0x00F08EC1+2700065]</span><br/><span class="error">E       	GetHandleVerifier [0x00F0C86C+2714828]</span><br/><span class="error">E       	GetHandleVerifier [0x00D13480+645344]</span><br/><span class="error">E       	(No symbol) [0x00C00FD2]</span><br/><span class="error">E       	(No symbol) [0x00C06C68]</span><br/><span class="error">E       	(No symbol) [0x00C06D4B]</span><br/><span class="error">E       	(No symbol) [0x00C10D6B]</span><br/><span class="error">E       	BaseThreadInitThunk [0x76377D69+25]</span><br/><span class="error">E       	RtlInitializeExceptionChain [0x7798B74B+107]</span><br/><span class="error">E       	RtlClearBits [0x7798B6CF+191]</span><br/><br/>D:\Python\Python_Installation\Lib\site-packages\selenium\webdriver\remote\errorhandler.py:245: InvalidArgumentException<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_invalid_email_message_send</td>
+          <td class="col-duration">5.24</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_contact.TestContactModal testMethod=test_invalid_email_message_send&gt;<br/><br/>    def test_invalid_email_message_send(self):<br/>        HeaderPage.click_contact_btn(self)<br/>        ContactModal.set_contact_email(self, &quot;b!fg&quot;)<br/>        ContactModal.set_contact_name(self, &quot;Jhon&quot;)<br/>        ContactModal.set_message(self, &quot;Hello everyone! \nYou have to many bugs&quot;)<br/>        ContactModal.click_send_message_btn(self)<br/>    <br/>        u.WDW(self.driver, 5).until(u.EC.alert_is_present())<br/>        alert = self.driver.switch_to.alert<br/>&gt;       self.assertNotEqual(alert.text, &quot;Thanks for the message!!&quot;)<br/><span class="error">E       AssertionError: &#x27;Thanks for the message!!&#x27; == &#x27;Thanks for the message!!&#x27;</span><br/><br/>tests\test_contact.py:29: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_invalid_message_without_char</td>
+          <td class="col-duration">4.99</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_contact.TestContactModal testMethod=test_invalid_message_without_char&gt;<br/><br/>    def test_invalid_message_without_char(self):<br/>        HeaderPage.click_contact_btn(self)<br/>        ContactModal.click_send_message_btn(self)<br/>    <br/>        u.WDW(self.driver, 5).until(u.EC.alert_is_present())<br/>        alert = self.driver.switch_to.alert<br/>&gt;       self.assertNotEqual(alert.text, &quot;Thanks for the message!!&quot;)<br/><span class="error">E       AssertionError: &#x27;Thanks for the message!!&#x27; == &#x27;Thanks for the message!!&#x27;</span><br/><br/>tests\test_contact.py:50: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_invalid_name_message_send</td>
+          <td class="col-duration">5.35</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_contact.TestContactModal testMethod=test_invalid_name_message_send&gt;<br/><br/>    def test_invalid_name_message_send(self):<br/>        HeaderPage.click_contact_btn(self)<br/>        ContactModal.set_contact_email(self, &quot;Jhon237@gmail.com&quot;)<br/>        ContactModal.set_contact_name(self, 24324)<br/>        ContactModal.set_message(self, &quot;Hello everyone! \nYou have to many bugs&quot;)<br/>        ContactModal.click_send_message_btn(self)<br/>    <br/>        u.WDW(self.driver, 5).until(u.EC.alert_is_present())<br/>        alert = self.driver.switch_to.alert<br/>&gt;       self.assertNotEqual(alert.text, &quot;Thanks for the message!!&quot;)<br/><span class="error">E       AssertionError: &#x27;Thanks for the message!!&#x27; == &#x27;Thanks for the message!!&#x27;</span><br/><br/>tests\test_contact.py:41: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_name_length_more_than_10_char</td>
+          <td class="col-duration">5.53</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_contact.TestContactModal testMethod=test_name_length_more_than_10_char&gt;<br/><br/>    def test_name_length_more_than_10_char(self):<br/>        HeaderPage.click_contact_btn(self)<br/>        ContactModal.set_contact_email(self, &quot;Jhon237@gmail.com&quot;)<br/>        ContactModal.set_contact_name(self, &quot;asd&quot;*4)<br/>        ContactModal.set_message(self, &quot;Hello everyone! \nYou have to many bugs&quot;)<br/>        ContactModal.click_send_message_btn(self)<br/>    <br/>        u.WDW(self.driver, 5).until(u.EC.alert_is_present())<br/>        alert = self.driver.switch_to.alert<br/>&gt;       self.assertNotEqual(alert.text, &quot;Thanks for the message!!&quot;)<br/><span class="error">E       AssertionError: &#x27;Thanks for the message!!&#x27; == &#x27;Thanks for the message!!&#x27;</span><br/><br/>tests\test_contact.py:62: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_home.py::TestHomePage::test_leftside_indicator</td>
+          <td class="col-duration">9.20</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_home.TestHomePage testMethod=test_leftside_indicator&gt;<br/><br/>    def test_leftside_indicator(self):<br/>&gt;       HomePage.click_leftslide_indicator(self)<br/><br/>tests\test_home.py:18: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>src\pages\home.py:21: in click_leftslide_indicator<br/>    u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome[&#x27;Slide_LeftSlide_indicator&#x27;])).click()<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;selenium.webdriver.support.wait.WebDriverWait (session=&quot;3c072f20dad3bca2a5ca0f9f9467b5e2&quot;)&gt;<br/>method = &lt;function visibility_of_element_located.&lt;locals&gt;._predicate at 0x000002A733FB2840&gt;, message = &#x27;&#x27;<br/><br/>    def until(self, method, message: str = &quot;&quot;):<br/>        &quot;&quot;&quot;Calls the method provided with the driver as an argument until the \<br/>        return value does not evaluate to ``False``.<br/>    <br/>        :param method: callable(WebDriver)<br/>        :param message: optional message for :exc:`TimeoutException`<br/>        :returns: the result of the last call to `method`<br/>        :raises: :exc:`selenium.common.exceptions.TimeoutException` if timeout occurs<br/>        &quot;&quot;&quot;<br/>        screen = None<br/>        stacktrace = None<br/>    <br/>        end_time = time.monotonic() + self._timeout<br/>        while True:<br/>            try:<br/>                value = method(self._driver)<br/>                if value:<br/>                    return value<br/>            except self._ignored_exceptions as exc:<br/>                screen = getattr(exc, &quot;screen&quot;, None)<br/>                stacktrace = getattr(exc, &quot;stacktrace&quot;, None)<br/>            time.sleep(self._poll)<br/>            if time.monotonic() &gt; end_time:<br/>                break<br/>&gt;       raise TimeoutException(message, screen, stacktrace)<br/><span class="error">E       selenium.common.exceptions.TimeoutException: Message:</span><br/><br/>D:\Python\Python_Installation\Lib\site-packages\selenium\webdriver\support\wait.py:95: TimeoutException<br/></div></td></tr></tbody>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">tests/test_home.py::TestHomePage::test_match_product_links_image_title_next_page</td>
+          <td class="col-duration">14.32</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;tests.test_home.TestHomePage testMethod=test_match_product_links_image_title_next_page&gt;<br/><br/>    def test_match_product_links_image_title_next_page(self):<br/>        &quot;&quot;&quot;<br/>        Homepage - Products - Matching products links in the next page<br/>        :return:<br/>        &quot;&quot;&quot;<br/>        u.sleep(5)<br/>        HomePage.click_next_button(self)<br/>        u.sleep(5)<br/>        products_images = HomePage.get_all_products_images_in_grid(self)<br/>        products_titles = HomePage.get_all_products_titles_in_grid(self)<br/>    <br/>        images = list()<br/>        titles = list()<br/>    <br/>        for prod in products_images:<br/>            images.append(prod.get_attribute(&#x27;href&#x27;))<br/>    <br/>        for prod in products_titles:<br/>            titles.append(prod.get_attribute(&#x27;href&#x27;))<br/>    <br/>        if len(images) == len(titles):<br/>            for i in range(len(images)):<br/>                try:<br/>&gt;                   self.assertEqual(images[i], titles[i])<br/><br/>tests\test_home.py:77: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;tests.test_home.TestHomePage testMethod=test_match_product_links_image_title_next_page&gt;, first = &#x27;https://demoblaze.com/index.html#&#x27;<br/>second = &#x27;https://demoblaze.com/prod.html?idp_=10&#x27;, msg = None<br/><br/>    def assertEqual(self, first, second, msg=None):<br/>        &quot;&quot;&quot;Fail if the two objects are unequal as determined by the &#x27;==&#x27;<br/>           operator.<br/>        &quot;&quot;&quot;<br/>        assertion_func = self._getAssertEqualityFunc(first, second)<br/>&gt;       assertion_func(first, second, msg=msg)<br/><br/>D:\Python\Python_Installation\Lib\unittest\case.py:873: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;tests.test_home.TestHomePage testMethod=test_match_product_links_image_title_next_page&gt;, first = &#x27;https://demoblaze.com/index.html#&#x27;<br/>second = &#x27;https://demoblaze.com/prod.html?idp_=10&#x27;, msg = None<br/><br/>    def assertMultiLineEqual(self, first, second, msg=None):<br/>        &quot;&quot;&quot;Assert that two multi-line strings are equal.&quot;&quot;&quot;<br/>        self.assertIsInstance(first, str, &#x27;First argument is not a string&#x27;)<br/>        self.assertIsInstance(second, str, &#x27;Second argument is not a string&#x27;)<br/>    <br/>        if first != second:<br/>            # don&#x27;t use difflib if the strings are too long<br/>            if (len(first) &gt; self._diffThreshold or<br/>                len(second) &gt; self._diffThreshold):<br/>                self._baseAssertEqual(first, second, msg)<br/>            firstlines = first.splitlines(keepends=True)<br/>            secondlines = second.splitlines(keepends=True)<br/>            if len(firstlines) == 1 and first.strip(&#x27;\r\n&#x27;) == first:<br/>                firstlines = [first + &#x27;\n&#x27;]<br/>                secondlines = [second + &#x27;\n&#x27;]<br/>            standardMsg = &#x27;%s != %s&#x27; % _common_shorten_repr(first, second)<br/>            diff = &#x27;\n&#x27; + &#x27;&#x27;.join(difflib.ndiff(firstlines, secondlines))<br/>            standardMsg = self._truncateMessage(standardMsg, diff)<br/>&gt;           self.fail(self._formatMessage(msg, standardMsg))<br/><br/>D:\Python\Python_Installation\Lib\unittest\case.py:1253: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;tests.test_home.TestHomePage testMethod=test_match_product_links_image_title_next_page&gt;<br/>msg = &quot;&#x27;https://demoblaze.com/index.html#&#x27; != &#x27;https://demoblaze.com/prod.html?idp_=10&#x27;\n- https://demoblaze.com/index.html#...                   ^^ --     ^\n+ https://demoblaze.com/prod.html?idp_=10\n?                       ^^^      ^^^^^^^^\n&quot;<br/><br/>    def fail(self, msg=None):<br/>        &quot;&quot;&quot;Fail immediately, with the given message.&quot;&quot;&quot;<br/>&gt;       raise self.failureException(msg)<br/><span class="error">E       AssertionError: &#x27;https://demoblaze.com/index.html#&#x27; != &#x27;https://demoblaze.com/prod.html?idp_=10&#x27;</span><br/><span class="error">E       - https://demoblaze.com/index.html#</span><br/><span class="error">E       ?                       ^^ --     ^</span><br/><span class="error">E       + https://demoblaze.com/prod.html?idp_=10</span><br/><span class="error">E       ?                       ^^^      ^^^^^^^^</span><br/><br/>D:\Python\Python_Installation\Lib\unittest\case.py:703: AssertionError<br/><br/>During handling of the above exception, another exception occurred:<br/><br/>self = &lt;tests.test_home.TestHomePage testMethod=test_match_product_links_image_title_next_page&gt;<br/><br/>    def test_match_product_links_image_title_next_page(self):<br/>        &quot;&quot;&quot;<br/>        Homepage - Products - Matching products links in the next page<br/>        :return:<br/>        &quot;&quot;&quot;<br/>        u.sleep(5)<br/>        HomePage.click_next_button(self)<br/>        u.sleep(5)<br/>        products_images = HomePage.get_all_products_images_in_grid(self)<br/>        products_titles = HomePage.get_all_products_titles_in_grid(self)<br/>    <br/>        images = list()<br/>        titles = list()<br/>    <br/>        for prod in products_images:<br/>            images.append(prod.get_attribute(&#x27;href&#x27;))<br/>    <br/>        for prod in products_titles:<br/>            titles.append(prod.get_attribute(&#x27;href&#x27;))<br/>    <br/>        if len(images) == len(titles):<br/>            for i in range(len(images)):<br/>                try:<br/>                    self.assertEqual(images[i], titles[i])<br/>    <br/>                except AssertionError:<br/>&gt;                   raise AssertionError(f&quot;Products&#x27; title and image are not matching the same link.\n This is this product according to images: {images[i]} \nand this is the product according to titles: {titles[i]}&quot;)<br/><span class="error">E                   AssertionError: Products&#x27; title and image are not matching the same link.</span><br/><span class="error">E                    This is this product according to images: https://demoblaze.com/index.html# </span><br/><span class="error">E                   and this is the product according to titles: https://demoblaze.com/prod.html?idp_=10</span><br/><br/>tests\test_home.py:80: AssertionError<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_about_us.py::TestAboutUsPage::test_play_button</td>
+          <td class="col-duration">12.28</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_add_item_to_cart</td>
+          <td class="col-duration">9.45</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_min_purchase_details</td>
+          <td class="col-duration">15.31</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_ok_button_valid</td>
+          <td class="col-duration">17.10</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_place_order_button</td>
+          <td class="col-duration">15.98</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_cart.py::TestCartPage::test_purchase_with_valid_data</td>
+          <td class="col-duration">15.15</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_X_btn</td>
+          <td class="col-duration">5.15</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_close_btn</td>
+          <td class="col-duration">9.10</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_message_length_more_than_256_char</td>
+          <td class="col-duration">10.69</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_send_message_btn</td>
+          <td class="col-duration">10.16</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_contact.py::TestContactModal::test_valid_message_send</td>
+          <td class="col-duration">13.49</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_header.py::TestHeaderPage::test_about_us_btn</td>
+          <td class="col-duration">5.02</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_header.py::TestHeaderPage::test_cart_btn</td>
+          <td class="col-duration">8.46</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_header.py::TestHeaderPage::test_contact_btn</td>
+          <td class="col-duration">9.03</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_header.py::TestHeaderPage::test_home_btn</td>
+          <td class="col-duration">8.10</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_header.py::TestHeaderPage::test_login_btn</td>
+          <td class="col-duration">9.25</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_header.py::TestHeaderPage::test_logo_btn</td>
+          <td class="col-duration">8.13</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_header.py::TestHeaderPage::test_signup_btn</td>
+          <td class="col-duration">13.42</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_home.py::TestHomePage::test_match_product_links_image_title</td>
+          <td class="col-duration">8.93</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">tests/test_home.py::TestHomePage::test_middleside_indicator</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody></table></body></html>

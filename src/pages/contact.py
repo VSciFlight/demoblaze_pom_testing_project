@@ -19,7 +19,7 @@ class ContactModal:
         u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(ContactLocator.locContact['X_btn'])).click()
 
     def click_close_btn(self):
-        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(locators.Locator.locContact['Close_btn'])).click()
+        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(ContactLocator.locContact['Close_btn'])).click()
 
     def click_send_message_btn(self):
-        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(locators.Locator.locContact['Send_Message_btn'])).click()
+        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(ContactLocator.locContact['Send_Message_btn'])).click()

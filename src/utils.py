@@ -1,7 +1,10 @@
 import selenium
 import unittest
+import pytest
 import string
 import random
+
+import src.xceptions as xceptions
 
 from selenium import webdriver as WebDriver
 from selenium.webdriver.common.by import By
@@ -12,24 +15,26 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options as OptionsChrome
 from selenium.webdriver.firefox.options import Options as OptionsFirefox
 from selenium.webdriver.edge.options import Options as OptionsEdge
+import selenium.common.exceptions as selexcep
 
 from time import sleep
 
 url = 'https://demoblaze.com/index.html'
 
-class WebDriverSetUp(unittest.TestCase):
 
-    def setUp(self) -> None:
+class WebDriverSetUp(unittest.TestCase):
+    def setUp(self):
         try:
             self.url = 'https://demoblaze.com/index.html'
             # chromedriver_path = 'drivers/chromedriver.exe'
             # options.add_argument("--headless")
 
             # driver_option = input(
-            #     "Choose browser to test with: Chrome, Edge, Firefox \n NOTE: The browser must be installed on your machine... ").lower()
+            # "Choose browser to test with: Chrome, Edge, Firefox \n NOTE: The browser must be installed on your machine... ").lower()
 
             options = OptionsChrome()
             options.add_argument("--disable-extensions")
+            options.add_argument("--headless")
             self.driver = WebDriver.Chrome(options=options)
 
             # if driver_option == 'chrome':
@@ -88,7 +93,6 @@ def rand_string(group=string.ascii_letters, n=10):
     return ''.join(random.choice(group) for i in range(n))
 
 
-if __name__ == '__main__':
-    unittest.main()
+
 
 

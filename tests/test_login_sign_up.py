@@ -1,4 +1,5 @@
 import string
+
 from src.pages.login_sign_up import LoginSignUpPage
 from src.locators.locators_index import LoginLocator
 from src import utils as u
@@ -8,12 +9,14 @@ from src import utils as u
 class TestLoginSignUp(u.WebDriverSetUp):
 
     username = u.rand_string(n=10)
-    password = u.rand_string(group=string.printable,n=10)
+    password = u.rand_string(group=string.printable, n=10)
 
     valid_username = "qazwsxedcqaz"
     valid_password = "qazwsxedcqaz"
 
 
+    # @u.allure.description("Tests Sign Up")
+    # @u.allure.severity(severity_level="HIGH")
     def test_sign_up(self):
         """
         Sign up - Modal - Create a user using the form
@@ -29,7 +32,7 @@ class TestLoginSignUp(u.WebDriverSetUp):
 
         except:
             print("The user exists")
-            self.assertEqual(alert.text, "This user already exist.")
+            assert alert.text == "This user already exist."
             alert.accept()
 
 
@@ -75,7 +78,7 @@ class TestLoginSignUp(u.WebDriverSetUp):
         u.WDW(self.driver, 5).until(u.EC.alert_is_present())
         alert = self.driver.switch_to.alert
 
-        self.assertNotEqual(alert.text, "Sign up successful.",msg="Able to create a user above 10 chars in username")
+        self.assertNotEqual(alert.text, "Sign up successful.", msg="Able to create a user above 10 chars in username")
 
         alert.accept()
 
@@ -117,7 +120,7 @@ class TestLoginSignUp(u.WebDriverSetUp):
 
 
 
-    def test_login(self):
+    def test_login_after_sign_up(self):
         """
         Log in - Modal - Log into new account
         Log in - Modal - Log into existing account
@@ -139,20 +142,19 @@ class TestLoginSignUp(u.WebDriverSetUp):
 
         self.assertEqual(welc_user.text, 'Welcome ' + self.username)
 
-
-    def test_login_invalid(self):
+    def test_login_valid(self):
         """
-        Log in - Modal - Log into non-existing account (N)
-        Test that you cannot log into non-existing account
+        Log in - Modal - Log into existing account
+
         :return:
         """
-        LoginSignUpPage.login_acc(self, self.username, "1234")
+        LoginSignUpPage.login_acc(self, self.valid_username, self.valid_password)
 
-        u.WDW(self.driver, 5).until(u.EC.alert_is_present())
-        alert = self.driver.switch_to.alert
+        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(LoginLocator.locLog['Welcome']))
+        welc_user = self.driver.find_element(u.By.XPATH, '//*[@id="nameofuser"]')
 
-        self.assertEqual(alert.text, "User does not exist.")
-        alert.accept()
+        self.assertEqual(welc_user.text, 'Welcome ' + self.valid_username)
+        # I would expect the site to tell me I miss only the username
 
 
     def test_login_no_values(self):
@@ -171,24 +173,11 @@ class TestLoginSignUp(u.WebDriverSetUp):
 
 
 
-    def test_login_valid_user(self):
+    def test_login_invalid_user(self):
         """
-        Log in - Modal - Log into existing account
-
+        I would expect the site to tell me the user doesn't exist before telling me there is no password
         :return:
         """
-        LoginSignUpPage.login_acc(self, self.valid_username, self.valid_password)
-
-        u.WDW(self.driver, 5).until(u.EC.alert_is_present())
-        alert = self.driver.switch_to.alert
-
-        self.assertNotEqual(alert.text, "Please fill out Username and Password.")
-        alert.accept()
-        # I would expect the site to tell me I miss only the username
-
-
-
-    def test_login_invalid_user(self):
         LoginSignUpPage.login_acc(self, self.username, "")
 
         u.WDW(self.driver, 5).until(u.EC.alert_is_present())
@@ -196,7 +185,7 @@ class TestLoginSignUp(u.WebDriverSetUp):
 
         self.assertEqual(alert.text, "User does not exist.")
         alert.accept()
-        # I would expect the site to tell me the user doesn't exist
+
 
 
     def test_login_invalid_password(self):
@@ -240,7 +229,6 @@ class TestLoginSignUp(u.WebDriverSetUp):
 
         u.open_new_tab(self.driver, self.url)
 
-
         u.WDW(self.driver, 10).until(u.EC.visibility_of_element_located(LoginLocator.locLog['Welcome']))
         welc_user = self.driver.find_element(u.By.XPATH, '//*[@id="nameofuser"]')
 
@@ -260,14 +248,15 @@ class TestLoginSignUp(u.WebDriverSetUp):
         u.sleep(2)
 
         self.driver.quit()
-
+        u.sleep(1)
         u.WebDriverSetUp.setUp(self)
 
-        u.WDW(self.driver, 10).until(u.EC.visibility_of_element_located(LoginLocator.locLog['Welcome']))
-        welc_user = self.driver.find_element(u.By.XPATH, '//*[@id="nameofuser"]')
-
-        self.assertEqual(welc_user.text, 'Welcome ' + self.valid_username)
-
+        try:
+            u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(LoginLocator.locLog['Welcome']))
+            welc_user = self.driver.find_element(u.By.XPATH, '//*[@id="nameofuser"]')
+            self.assertEqual(welc_user.text, 'Welcome ' + self.valid_username)
+        except u.selexcep.TimeoutException:
+            raise AssertionError("No sign of user being logged in")
 
     def test_user_cookie_change(self):
         """

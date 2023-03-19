@@ -18,10 +18,20 @@
             </li>
         </ol>
     </li>
-    <li> <h3>UI</h3>
+    <li> <h3>UI</h3> <p>The UI testings were done manually</p>
         <ol>
             <li>
-                placehodler
+                <strong>Responsiveness. </strong> <br> A LOT of this site elements were not responsive to various screen sizes. Some fields were clipping, some were overflowing,
+others were broken and important texts and buttons were hidden during resizing.
+            </li>
+            <li>
+                <strong> Indications. </strong><br>
+                    There is a huge lack of indicators such as pagination for products and hovering buttons in "Categories" sections.
+                    The user can feel fogginess and lost after a while in the website. Indicators are important for CLARITY and ease of access.
+            </li>
+            <li>
+                <strong>Choice of Colors.</strong><br>
+                    As a person who loves colors I can't stand the harmony and design 
             </li>
         </ol>
     </li>
