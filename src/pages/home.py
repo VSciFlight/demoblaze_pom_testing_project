@@ -12,20 +12,34 @@ class HomePage:
 ################################################################ Slideshow #################################################################################################
 
     def click_right_arrow_btn(self):
-        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_Right_Arrow'])).click()
+        try:
+            u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_Right_Arrow'])).click()
+        except u.selexcep.TimeoutException:
+            raise u.xceptions.HeadlessException
 
     def click_left_arrow_btn(self):
-        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_Left_Arrow'])).click()
+        try:
+            u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_Left_Arrow'])).click()
+        except u.selexcep.TimeoutException:
+            raise u.xceptions.HeadlessException
 
     def click_leftslide_indicator(self):
-        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_LeftSlide_indicator'])).click()
+        try:
+            u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_LeftSlide_indicator'])).click()
+        except u.selexcep.TimeoutException:
+            raise u.xceptions.HeadlessException
 
-    def click_midleslide_indicator(self):
-        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_MiddleSlide_indicator'])).click()
+    def click_middleslide_indicator(self):
+        try:
+            u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_MiddleSlide_indicator'])).click()
+        except u.selexcep.TimeoutException:
+            raise u.xceptions.HeadlessException
 
     def click_rightslide_indicator(self):
-        u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_RightSlide_indicator'])).click()
-
+        try:
+            u.WDW(self.driver, 5).until(u.EC.visibility_of_element_located(HomepageLocator.locHome['Slide_RightSlide_indicator'])).click()
+        except u.selexcep.TimeoutException:
+            raise u.xceptions.HeadlessException
 
     def click_on_product(self):
         u.WDW(self.driver, 5).until(

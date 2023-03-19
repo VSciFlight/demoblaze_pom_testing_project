@@ -8,23 +8,56 @@ class TestHomePage(u.WebDriverSetUp):
 
     def test_slideshow_right_arrow(self):
         HomePage.click_right_arrow_btn(self)
-        self.assertEqual(self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[2]").get_attribute("class"), "active")
+        u.sleep(1)
+        cl = self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/a[2]/span[1]").get_attribute("class")
+        try:
+            self.assertEqual(cl, "active")
+        except u.selexcep.TimeoutException:
+            print("Issue relevant for the --headless option")
+        except AssertionError:
+            raise AssertionError
 
     def test_slideshow_left_arrow(self):
         HomePage.click_left_arrow_btn(self)
-        self.assertEqual(self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[3]").get_attribute("class"), "active")
+        u.sleep(1)
+        cl = self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/a[1]/span[1]").get_attribute("class")
+        try:
+            self.assertEqual(cl, "active")
+        except u.selexcep.TimeoutException:
+            print("Issue relevant for the --headless option")
+        except AssertionError:
+            raise AssertionError
 
     def test_leftside_indicator(self):
         HomePage.click_leftslide_indicator(self)
-        self.assertEqual(self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[1]").get_attribute("class"), "active")
+        u.sleep(1)
+        cl = self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[1]").get_attribute("class")
+        try:
+            self.assertEqual(cl, "active")
+        except u.selexcep.TimeoutException:
+            print("Issue relevant for the --headless option")
+        except AssertionError:
+            raise AssertionError
 
     def test_middleside_indicator(self):
-        HomePage.click_midleslide_indicator(self)
-        self.assertEqual(self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[2]").get_attribute("class"), "active")
+        HomePage.click_middleslide_indicator(self)
+        u.sleep(1)
+        cl = self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[2]").get_attribute("class")
+        try:
+            self.assertEqual(cl, "active")
+        except u.selexcep.TimeoutException:
+            print("Issue relevant for the --headless option")
+        except AssertionError:
+            raise AssertionError
 
     def test_rightside_indicator(self):
         HomePage.click_rightslide_indicator(self)
-        self.assertEqual(self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[3]").get_attribute("class"), "active")
+        cl = self.driver.find_element(u.By.XPATH, "/html/body/nav/div[2]/div/ol/li[3]").get_attribute("class")
+        u.sleep(3)
+        try:
+            self.assertEqual(cl, "active")
+        except AssertionError:
+            raise AssertionError
 
 
     def test_match_product_links_image_title(self):

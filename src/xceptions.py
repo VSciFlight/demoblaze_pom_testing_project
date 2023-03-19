@@ -1,0 +1,2 @@
+class HeadlessException(Exception):
+    pass

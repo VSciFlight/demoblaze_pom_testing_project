@@ -1,1 +1,1 @@
-python -m unittest discover -v
+pytest tests --alluredir=reports
