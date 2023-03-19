@@ -10,3 +10,4 @@ tests/__pycache__/test_product.cpython-311.pyc
 *.pyc
 pages/__pycache__/__init__.cpython-311.pyc
 tests/__pycache__/test_login_sign_up.cpython-311.pyc
+allure-report/*
